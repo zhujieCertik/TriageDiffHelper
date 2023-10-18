@@ -2,6 +2,24 @@ import os;
 import json;
 import string;
 
+filenameA = "a.txt"
+filenameB = "b.txt"
+outfilenameA = "outA.txt"
+outfilenameB = "outB.txt"
+
+seperate_semgrep = "' on "
+seperate_yara = "/efs/data/projects/"
+split_string = ""
+
+def determineSemOrYara(inputFile):
+    global split_string
+    for line in open(inputFile): 
+        if line.__contains__("semgrep"):
+            split_string = seperate_semgrep
+            return
+        split_string = seperate_yara
+
+
 # prepare set from input file
 def prepareSet(inputFile):
     pidList = set()
@@ -10,9 +28,9 @@ def prepareSet(inputFile):
         jsonData = json.loads(line)
         # print(jsonData['Message'])
         msg = jsonData['Message']
-        if msg.count("/efs/data/projects/"):
+        if msg.count(split_string):
             # print(msg)
-            list = msg.split("/efs/data/projects/")
+            list = msg.split(split_string)
             # print(list[1])
             # b52273d0-6c20-11ec-b59f-7dd4a7e83b0c/9b02844c20bdeec5d69dab1592570309138a949b/contracts/ERC1155Modular.sol:104
             tmp = list[1]
@@ -37,9 +55,9 @@ def prepareOutput(input_filename, output_filename, filter_set):
         jsonData = json.loads(line)
         # print(jsonData['Message'])
         msg = jsonData['Message']
-        if msg.count("/efs/data/projects/"):
+        if msg.count(split_string):
             # print(msg)
-            list = msg.split("/efs/data/projects/")
+            list = msg.split(split_string)
             # print(list[1])
             # b52273d0-6c20-11ec-b59f-7dd4a7e83b0c/9b02844c20bdeec5d69dab1592570309138a949b/contracts/ERC1155Modular.sol:104
             tmp = list[1]
@@ -57,14 +75,13 @@ def prepareOutput(input_filename, output_filename, filter_set):
 if __name__== '__main__':
     # config
     print("A is result of pre rule, B is result of current rule")
-    filenameA = "a.txt"
-    filenameB = "b.txt"
-    outfilenameA = "outA.txt"
-    outfilenameB = "outB.txt"
 
     # prepare set A
+    determineSemOrYara(filenameA)
+    print(split_string)
     pidListA = prepareSet(filenameA)
     # prepare set B
+    determineSemOrYara(filenameB)
     pidListB = prepareSet(filenameB)
 
     # cal a-b
@@ -83,8 +100,10 @@ if __name__== '__main__':
     print("len both_have == " + str(len(both_have)))
 
     # output a-b
+    determineSemOrYara(filenameA)
     prepareOutput(filenameA, outfilenameA, in_a_not_in_b)
 
     # output b-a
+    determineSemOrYara(filenameB)
     prepareOutput(filenameB, outfilenameB, in_b_not_in_a)
 
